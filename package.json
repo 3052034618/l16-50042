@@ -1,0 +1,47 @@
+{
+  "name": "markdown-blog-system",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && prisma db push && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.10.2",
+    "@tailwindcss/typography": "^0.5.10",
+    "bcryptjs": "^2.4.3",
+    "clsx": "^2.1.0",
+    "date-fns": "^3.3.1",
+    "flexsearch": "^0.7.43",
+    "gray-matter": "^4.0.3",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.344.0",
+    "nanoid": "^5.0.6",
+    "next": "14.1.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-markdown": "^9.0.1",
+    "react-syntax-highlighter": "^15.5.0",
+    "remark-gfm": "^4.0.0",
+    "sonner": "^1.4.3",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^20.11.20",
+    "@types/react": "^18.2.60",
+    "@types/react-dom": "^18.2.19",
+    "@types/react-syntax-highlighter": "^15.5.11",
+    "autoprefixer": "^10.4.18",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.1.3",
+    "postcss": "^8.4.35",
+    "prisma": "^5.10.2",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.3.3"
+  }
+}

@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  nickname  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  posts     Post[]
+  comments  Comment[]
+  settings  Setting?
+}
+
+model Post {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  summary     String?
+  content     String
+  status      String    @default("DRAFT")
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  tags        TagOnPost[]
+  comments    Comment[]
+  views       View[]
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Tag {
+  id    String      @id @default(cuid())
+  name  String      @unique
+  slug  String      @unique
+  color String?
+  posts TagOnPost[]
+  createdAt DateTime @default(now())
+}
+
+model TagOnPost {
+  postId String
+  tagId  String
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@index([tagId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
+  nickname  String
+  email     String
+  website   String?
+  content   String
+  status    String   @default("PENDING")
+  ip        String
+  userAgent String
+  isAdmin   Boolean  @default(false)
+  adminId   String?
+  admin     User?    @relation(fields: [adminId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([postId, status])
+  @@index([parentId])
+  @@index([status])
+}
+
+model View {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  fingerprint String
+  ip        String
+  userAgent String
+  createdAt DateTime @default(now())
+
+  @@index([postId, fingerprint])
+  @@index([createdAt])
+}
+
+model Setting {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  siteName        String   @default("我的博客")
+  siteDescription String?
+  requireApproval Boolean  @default(true)
+  commentEnabled  Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

@@ -1,0 +1,147 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --border: 214.3 31.8% 91.4%;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  ::selection {
+    @apply bg-primary-200;
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply max-w-6xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary-600 text-white hover:bg-primary-700 focus-visible:ring-primary-600;
+  }
+
+  .btn-secondary {
+    @apply btn bg-white text-gray-900 border border-gray-300 hover:bg-gray-50;
+  }
+
+  .btn-danger {
+    @apply btn bg-red-600 text-white hover:bg-red-700;
+  }
+
+  .btn-ghost {
+    @apply btn hover:bg-gray-100 text-gray-700;
+  }
+
+  .input {
+    @apply flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .textarea {
+    @apply flex w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50;
+    min-height: 100px;
+    resize: vertical;
+  }
+
+  .card {
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+}
+
+.markdown-body pre {
+  @apply rounded-lg border border-gray-200 bg-gray-900 p-4 overflow-x-auto text-sm;
+}
+
+.markdown-body code {
+  @apply relative rounded bg-gray-100 px-1.5 py-0.5 text-sm text-pink-600;
+}
+
+.markdown-body pre code {
+  @apply bg-transparent p-0 text-gray-100;
+}
+
+.markdown-body h1 {
+  @apply text-3xl font-bold mt-8 mb-4 text-gray-900;
+}
+
+.markdown-body h2 {
+  @apply text-2xl font-bold mt-6 mb-3 text-gray-900;
+}
+
+.markdown-body h3 {
+  @apply text-xl font-semibold mt-4 mb-2 text-gray-900;
+}
+
+.markdown-body p {
+  @apply my-4 leading-relaxed text-gray-700;
+}
+
+.markdown-body a {
+  @apply text-primary-600 hover:text-primary-800 underline underline-offset-2;
+}
+
+.markdown-body ul {
+  @apply list-disc pl-6 my-4 text-gray-700;
+}
+
+.markdown-body ol {
+  @apply list-decimal pl-6 my-4 text-gray-700;
+}
+
+.markdown-body li {
+  @apply my-1;
+}
+
+.markdown-body blockquote {
+  @apply border-l-4 border-gray-300 pl-4 my-4 italic text-gray-600;
+}
+
+.markdown-body table {
+  @apply w-full border-collapse my-4;
+}
+
+.markdown-body th,
+.markdown-body td {
+  @apply border border-gray-200 px-4 py-2 text-left;
+}
+
+.markdown-body th {
+  @apply bg-gray-50 font-semibold;
+}
+
+.markdown-body hr {
+  @apply my-8 border-gray-200;
+}
+
+.markdown-body img {
+  @apply rounded-lg max-w-full h-auto my-4;
+}
+
+.editor-textarea {
+  @apply w-full h-full resize-none border-0 outline-none p-4 font-mono text-sm leading-relaxed bg-gray-50 text-gray-800;
+}
+
+.editor-textarea:focus {
+  @apply ring-0 border-0 outline-none;
+}
