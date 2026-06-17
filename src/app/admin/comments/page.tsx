@@ -95,6 +95,7 @@ export default function CommentsPage() {
         body: JSON.stringify({ action }),
       });
       if (res.ok) {
+        const data = await res.json();
         toast.success(
           action === "APPROVE"
             ? "已通过审核"
@@ -102,8 +103,26 @@ export default function CommentsPage() {
             ? "已拒绝"
             : "已删除"
         );
-        loadComments();
-        router.refresh();
+        if (data.stats) {
+          setStats(data.stats);
+        }
+        setComments((prev) => {
+          if (action === "DELETE") {
+            return prev.filter((c) => c.id !== id);
+          }
+          const targetStatus = action === "APPROVE" ? "APPROVED" : "REJECTED";
+          if (status && status !== targetStatus) {
+            return prev.filter((c) => c.id !== id);
+          }
+          return prev.map((c) =>
+            c.id === id ? { ...c, status: targetStatus as any } : c
+          );
+        });
+        if (action === "DELETE") {
+          setTotal((prev) => Math.max(0, prev - 1));
+        } else if (status && status !== (action === "APPROVE" ? "APPROVED" : "REJECTED")) {
+          setTotal((prev) => Math.max(0, prev - 1));
+        }
       } else {
         toast.error("操作失败");
       }

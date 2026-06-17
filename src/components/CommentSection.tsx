@@ -52,7 +52,7 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
   const [loading, setLoading] = useState(true);
   const [commentEnabled, setCommentEnabled] = useState(true);
   const [requireApproval, setRequireApproval] = useState(true);
-  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<{ id: string; nickname: string } | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState<CommentFormData>({
@@ -115,6 +115,18 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
     });
   }
 
+  function addReplyToTree(list: Comment[], parentId: string, newComment: Comment): Comment[] {
+    return list.map((c) => {
+      if (c.id === parentId) {
+        return { ...c, replies: [...(c.replies || []), newComment] };
+      }
+      if (c.replies?.length) {
+        return { ...c, replies: addReplyToTree(c.replies, parentId, newComment) };
+      }
+      return c;
+    });
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrors({});
@@ -146,7 +158,7 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
         body: JSON.stringify({
           ...form,
           website: form.website || undefined,
-          parentId: replyTo || undefined,
+          parentId: replyTo?.id || undefined,
         }),
       });
 
@@ -171,7 +183,12 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
           });
         } else {
           toast.success("评论发表成功");
-          loadComments();
+          const newComment = data.comment as Comment;
+          if (newComment.parentId) {
+            setComments((prev) => addReplyToTree(prev, newComment.parentId!, newComment));
+          } else {
+            setComments((prev) => [newComment, ...prev]);
+          }
         }
         router.refresh();
       } else {
@@ -228,7 +245,7 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
           {replyTo && (
             <div className="flex items-center gap-2 text-sm text-gray-600 bg-blue-50 px-3 py-2 rounded-md">
               <Reply className="w-4 h-4 text-blue-600" />
-              正在回复某条评论
+              正在回复 @{replyTo.nickname}
               <button
                 type="button"
                 onClick={() => setReplyTo(null)}
@@ -352,7 +369,10 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
                 comment={comment}
                 collapsed={collapsed}
                 toggleCollapsed={toggleCollapsed}
-                onReply={() => setReplyTo(comment.id)}
+                onReply={(id, nickname) => {
+                  setReplyTo({ id, nickname });
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
               />
             ))}
           </ul>
@@ -372,7 +392,7 @@ function CommentItem({
   comment: Comment;
   collapsed: Set<string>;
   toggleCollapsed: (id: string) => void;
-  onReply: () => void;
+  onReply: (id: string, nickname: string) => void;
   depth?: number;
 }) {
   const isCollapsed = collapsed.has(comment.id);
@@ -424,7 +444,7 @@ function CommentItem({
               </div>
               <div className="mt-2 flex items-center gap-3">
                 <button
-                  onClick={onReply}
+                  onClick={() => onReply(comment.id, comment.nickname)}
                   className="text-xs text-gray-500 hover:text-primary-600 flex items-center gap-1"
                 >
                   <Reply className="w-3 h-3" />

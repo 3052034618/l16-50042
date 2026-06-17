@@ -60,21 +60,30 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+const STATUS_MAP: Record<string, string> = {
+  APPROVE: "APPROVED",
+  REJECT: "REJECTED",
+};
+
+export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
 
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "缺少评论ID" }, { status: 400 });
+    }
+
     const body = await req.json();
     const { action } = updateSchema.parse(body);
 
     const comment = await prisma.comment.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!comment) {
@@ -82,20 +91,37 @@ export async function POST(
     }
 
     if (action === "DELETE") {
-      await prisma.comment.delete({ where: { id: params.id } });
+      await prisma.comment.deleteMany({
+        where: { OR: [{ id }, { parentId: id }] },
+      });
       return NextResponse.json({ success: true });
     }
 
+    const targetStatus = STATUS_MAP[action];
+    if (!targetStatus) {
+      return NextResponse.json({ error: "无效操作" }, { status: 400 });
+    }
+
     const updated = await prisma.comment.update({
-      where: { id: params.id },
+      where: { id },
       data: {
-        status: action,
-        isAdmin: true,
+        status: targetStatus,
         adminId: user.id,
       },
     });
 
-    return NextResponse.json({ success: true, comment: updated });
+    const [total, pending, approved, rejected] = await Promise.all([
+      prisma.comment.count(),
+      prisma.comment.count({ where: { status: "PENDING" } }),
+      prisma.comment.count({ where: { status: "APPROVED" } }),
+      prisma.comment.count({ where: { status: "REJECTED" } }),
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      comment: updated,
+      stats: { total, pending, approved, rejected },
+    });
   } catch (e) {
     if (e instanceof z.ZodError) {
       return NextResponse.json(
@@ -103,6 +129,7 @@ export async function POST(
         { status: 400 }
       );
     }
+    console.error(e);
     return NextResponse.json({ error: "操作失败" }, { status: 500 });
   }
 }
