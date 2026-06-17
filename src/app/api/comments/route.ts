@@ -65,6 +65,23 @@ const STATUS_MAP: Record<string, string> = {
   REJECT: "REJECTED",
 };
 
+async function getAllDescendantIds(parentId: string): Promise<string[]> {
+  const result: string[] = [];
+  let currentIds = [parentId];
+  
+  while (currentIds.length > 0) {
+    const children = await prisma.comment.findMany({
+      where: { parentId: { in: currentIds } },
+      select: { id: true },
+    });
+    const childIds = children.map((c) => c.id);
+    result.push(...childIds);
+    currentIds = childIds;
+  }
+  
+  return result;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser();
@@ -91,10 +108,25 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "DELETE") {
+      const descendantIds = await getAllDescendantIds(id);
+      const allIds = [id, ...descendantIds];
+      
       await prisma.comment.deleteMany({
-        where: { OR: [{ id }, { parentId: id }] },
+        where: { id: { in: allIds } },
       });
-      return NextResponse.json({ success: true });
+
+      const [total, pending, approved, rejected] = await Promise.all([
+        prisma.comment.count(),
+        prisma.comment.count({ where: { status: "PENDING" } }),
+        prisma.comment.count({ where: { status: "APPROVED" } }),
+        prisma.comment.count({ where: { status: "REJECTED" } }),
+      ]);
+
+      return NextResponse.json({
+        success: true,
+        deletedCount: allIds.length,
+        stats: { total, pending, approved, rejected },
+      });
     }
 
     const targetStatus = STATUS_MAP[action];

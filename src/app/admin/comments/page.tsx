@@ -82,6 +82,25 @@ export default function CommentsPage() {
     loadComments();
   }, [loadComments]);
 
+  function collectAllDescendantIds(
+    commentId: string,
+    allComments: Comment[]
+  ): string[] {
+    const ids: string[] = [];
+    let currentParentIds = [commentId];
+    
+    while (currentParentIds.length > 0) {
+      const children = allComments.filter((c) =>
+        c.parent && currentParentIds.includes(c.parent.id)
+      );
+      const childIds = children.map((c) => c.id);
+      ids.push(...childIds);
+      currentParentIds = childIds;
+    }
+    
+    return ids;
+  }
+
   async function handleAction(
     id: string,
     action: "APPROVE" | "REJECT" | "DELETE"
@@ -106,22 +125,47 @@ export default function CommentsPage() {
         if (data.stats) {
           setStats(data.stats);
         }
+        
+        let newComments: Comment[] = [];
+        let removedCount = 0;
+        
         setComments((prev) => {
           if (action === "DELETE") {
-            return prev.filter((c) => c.id !== id);
+            const descendantIds = collectAllDescendantIds(id, prev);
+            const allDeletedIds = new Set([id, ...descendantIds]);
+            const filtered = prev.filter((c) => !allDeletedIds.has(c.id));
+            removedCount = allDeletedIds.size;
+            newComments = filtered;
+            return filtered;
           }
           const targetStatus = action === "APPROVE" ? "APPROVED" : "REJECTED";
           if (status && status !== targetStatus) {
-            return prev.filter((c) => c.id !== id);
+            removedCount = 1;
+            newComments = prev.filter((c) => c.id !== id);
+            return newComments;
           }
-          return prev.map((c) =>
+          newComments = prev.map((c) =>
             c.id === id ? { ...c, status: targetStatus as any } : c
           );
+          return newComments;
         });
+
         if (action === "DELETE") {
-          setTotal((prev) => Math.max(0, prev - 1));
+          const deletedCount = data.deletedCount || removedCount || 1;
+          setTotal((prev) => Math.max(0, prev - deletedCount));
         } else if (status && status !== (action === "APPROVE" ? "APPROVED" : "REJECTED")) {
           setTotal((prev) => Math.max(0, prev - 1));
+        }
+        
+        if (action === "DELETE" && page > 1) {
+          setTimeout(() => {
+            setComments((current) => {
+              if (current.length === 0) {
+                setPage((p) => Math.max(1, p - 1));
+              }
+              return current;
+            });
+          }, 0);
         }
       } else {
         toast.error("操作失败");
